@@ -3,12 +3,12 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 # from kivy.uix.behaviors import DragBehavior
 from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import ObjectProperty 
+from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty
 # import numpy as np
 # from kivy.core.window import Window
 # from kivy.clock import Clock
 from kivy.graphics import Line, Rectangle, Color, Ellipse
-# from kivy.vector import Vector
+from kivy.vector import Vector
 # from random import randint
 
 
@@ -31,18 +31,33 @@ class Ray(LineGeneral):
         super().__init__(x1,y1,x2,y2)
 
 class Particle(Widget):
+    def __init__ (self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.Movable = BooleanProperty(False)
+
+    def on_touch_move(self, touch):
+        self.center = [touch.x, touch.y]
     pass
 
 class TelaPrincipal(FloatLayout):
 
     particle = ObjectProperty(None)
+    rayQty = NumericProperty(4)
 
     def __init__ (self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        #particle = Particle(center = self.center, size=(50,50))
-
-        ray = Ray(300,300,500,300)
+        self.Tick()
+        
+    def Tick(self):
+        # Create rays
+        for i in range(self.rayQty):
+            direction = 200*Vector(1,1).rotate(i*360/self.rayQty)
+            ray = Ray(self.center_x,self.center_y,self.center_x+direction[0],self.center_y+direction[1])
+            with self.canvas:
+                Line(points=ray.points, width=2)
+        
         obst = Obstacle(450,200,500,400)
 
         interPoint = self.LineIntersection(ray.points, obst.points)
@@ -51,7 +66,6 @@ class TelaPrincipal(FloatLayout):
         with self.canvas:
             Line(points=ray.points, width=2)
             Line(points=obst.points, width=2)
-            Ellipse(pos=interPoint, size=(10,10))
 
     def LineIntersection(self, line1, line2):
         x1,y1,x2,y2 = line1
