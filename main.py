@@ -10,7 +10,7 @@ from kivy.clock import Clock
 from kivy.graphics import Line, Rectangle, Color
 from kivy.vector import Vector
 from random import randint
-
+#TESTE
 class TelaPrincipal(Screen):
 
     # Set main variables
