@@ -1,11 +1,18 @@
-<FloatLayout>:
+<TelaPrincipal>:
     particle: particleID
 
     Particle:
         id: particleID
 
+    # Button:
+    #     text: 'step'
+    #     size: 100,50
+    #     pos: 50, root.height-50
+    #     size_hint: None, None
+    #     on_release: root.Tick(0)
+
 <Particle>:
-    size: 50,50
+    size: 10,10
     size_hint: None, None
     center: self.parent.center
     canvas:
