@@ -1,56 +1,21 @@
-#:import Window kivy.core.window.Window
-
 <TelaPrincipal>:
-    ball: ballID
-    size: Window.size
+    particle: particleID
 
-    FloatLayout:
-        Ball:
-            id: ballID
-            center: self.parent.center_x, self.parent.center_y
-            #size_hint: 0.25, 0.2
-            #text: 'Drag me'
-    
-    FloatLayout:
-        id: obstacleLayout
+    Particle:
+        id: particleID
 
+    # Button:
+    #     text: 'step'
+    #     size: 100,50
+    #     pos: 50, root.height-50
+    #     size_hint: None, None
+    #     on_release: root.Tick(0)
 
-<Ball>:
+<Particle>:
+    size: 10,10
+    size_hint: None, None
+    center: self.parent.center
     canvas:
-        # Color:
-        #     rgba: 1,0.5,0.5,1
-        # Rectangle:
-        #     pos: self.pos
-        #     size: self.size
-        Color:
-            rgba: 1,1,1,1
         Ellipse:
             pos: self.pos
-            size: dp(30), dp(30)
-    
-    # Tamanho
-    size: dp(30), dp(30)
-    size_hint: None, None
-
-<Obstacle>:
-    #pos: 50,90
-    #size: 80,80
-    size_hint: None, None
-
-    # canvas:
-    #     Color:
-    #         rgba: 0,0,0,1
-    #     Line:
-    #         width: 1
-    #         rectangle: self.pos[0],self.pos[1],self.width,self.height
-        
-<OutRegion>:
-    size_hint: None,None
-    canvas:
-        Color:
-            rgba: 1,1,1,0.2
-        Rectangle:
-            pos: self.pos
             size: self.size
-
-

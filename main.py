@@ -1,160 +1,159 @@
 from kivy.app import App
-from kivy.uix.screenmanager import Screen
+# from kivy.uix.screenmanager import Screen
 from kivy.uix.widget import Widget
-from kivy.uix.behaviors import DragBehavior
+# from kivy.uix.behaviors import DragBehavior
 from kivy.uix.floatlayout import FloatLayout
-from kivy.properties import NumericProperty, ObjectProperty, BooleanProperty, ListProperty, ReferenceListProperty
-import numpy as np
+from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty, ListProperty
+# import numpy as np
 from kivy.core.window import Window
 from kivy.clock import Clock
-from kivy.graphics import Line, Rectangle, Color
+from kivy.graphics import Line, Rectangle, Color, Ellipse, Mesh
 from kivy.vector import Vector
 from random import randint
 
-class TelaPrincipal(Screen):
 
-    # Set main variables
-    ball = ObjectProperty(None)
-    ballClicked = BooleanProperty(False)
-    rays = ListProperty()
-    obstacles = ListProperty()
 
-    # Set number of rays and obstacles
-    nRays = NumericProperty(100)
-    nObstacles = NumericProperty(5)
+class LineGeneral():
+    def __init__(self, x1, y1, x2, y2, angle):
+        self.Vi = Vector(x1,y1)
+        self.Vf = Vector(x2,y2)
+        self.angle = angle
 
-    def __init__(self, *args, **kwargs):
+class Obstacle(LineGeneral):
+    def __init__(self, x1,y1,x2,y2,angle=0):
+        super().__init__(x1,y1,x2,y2,angle)
+
+class Ray(LineGeneral):
+    def __init__(self, x1,y1,x2,y2,angle):
+        super().__init__(x1,y1,x2,y2,angle)
+
+class Particle(Widget):
+    def __init__ (self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        Clock.schedule_interval(self.update,0.01/60.0)
-        
-        # Add obstacles
-        for i in range(self.nObstacles):
-            self.obstacle = Obstacle()
-            self.obstacle.pos = [randint(0,self.width-100),randint(0,self.height-100)]
-            self.obstacles.append(self.obstacle)
-            self.ids.obstacleLayout.add_widget(self.obstacle)
-
-        # Add rays
-        for i in range(self.nRays):
-            self.ray = Ray(angle=i*360.0/self.nRays, center=Window.center)
-            self.rays.append(self.ray)
-            self.add_widget(self.ray)
-        
-        
-
-
-    def on_touch_down(self, touch):
-        if self.ball.collide_point(*touch.pos):
-            self.ballClicked = True
-        return super().on_touch_down(touch)
-
-    def on_touch_up(self, touch):
-        self.ballClicked = False
-        return super().on_touch_up(touch)
+        self.Movable = BooleanProperty(False)
 
     def on_touch_move(self, touch):
-        if self.ballClicked == True:
-            self.ball.center = touch.pos
-            
-            
-        return super().on_touch_move(touch)
+        self.center = [touch.x, touch.y]
+        #print(self.center)
+    pass
 
-    def update(self, dt):
-        for raio in self.rays:
-            raio.center = self.ball.center
-            raio.ShootRays(obstacles=self.obstacles)
-        
-        for obs in self.obstacles:
-            obs.redraw()
+class TelaPrincipal(FloatLayout):
 
-class Ball(Widget):
-    pass 
+    particle = ObjectProperty(None)
+    rayQty = NumericProperty(1000)
+    obstQty = NumericProperty(3)
 
-class Obstacle(Widget):
-    
-    def redraw(self):
-        self.canvas.clear()
-        with self.canvas:
-            Color(rgba= (1,0,0,0.1))
-            Rectangle(pos=self.pos, size=self.size, width=5)
-            #Line(width= 1, rectangle= (self.pos[0],self.pos[1],self.width,self.height))
-    
-    
-class Ray(Widget):
-    def __init__ (self, angle, *args, **kwargs):
+    rayList = ListProperty()
+    obstList = ListProperty()
+
+    #tickCount = 0
+
+    def __init__ (self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.angle = angle
-        self.size_hint = (None,None)        
-    
-    def ShootRays(self, obstacles):
-        addValue = 10
+        Clock.schedule_interval(self.Tick,1/60.0)
 
-        #vectMov = Vector(addValue,addValue).rotate(self.angle)
+        # Add rays to Screen
+        for i in range(0,self.rayQty):
+            direction = 300*Vector(0,1).rotate(i*360/self.rayQty)
+            ray = Ray(Window.center[0],Window.center[1],Window.center[0]+direction[0],Window.center[1]+direction[1],i*360/self.rayQty)
+            self.rayList.append(ray)
+        
+        # Add obstacles to Screen
+        for i in range(0,self.obstQty):
+            obst = Obstacle(randint(0,Window.width),randint(0,Window.height),randint(0,Window.width),randint(0,Window.height))
+            self.obstList.append(obst)
 
-        #vectMov_x = np.sin(np.radians(self.angle))
-        #vectMov_y = np.cos(np.radians(self.angle))
+        
+    def Tick(self, dt):
+        # Clean Canvas
+        self.canvas.before.clear()
 
-        finalPos_x = self.center_x
-        finalPos_y = self.center_y
-        finalPos = [finalPos_x,finalPos_y]
-        obstaclesList = obstacles
+        #self.tickCount +=1
+        #raycount = 0
+        #print(self.tickCount)
 
-        # outObstRegionList = ListProperty()
-        # for obst in obstaclesList:
-        #     outObstRegion = OutRegion(center= obst.center, )
+        meshVerticesList = []
 
-
-        #self.parent.add_widget(outObstRegion)
-
-        hit = False
-        while not hit:
-
-            vectMov = Vector(addValue,addValue).rotate(self.angle)
-            finalPos_x += vectMov.x
-            finalPos_y += vectMov.y
-            #finalPos_x += vectMov_x
-            #finalPos_y += vectMov_y
-
-            if finalPos_x <= 0 or finalPos_x >= self.parent.width:
-                hit = True
-
-            if finalPos_y <=0 or finalPos_y >= self.parent.height:
-                hit = True
-
-            for obstacle in obstaclesList:
-                # if obstacle.collide_point(finalPos_x, finalPos_y):
-                #     hit=True
-                #     print(finalPos_x, obstacle.right,obstacle.pos[0],finalPos_y,obstacle.pos[1],obstacle.top)
-               # print()
-
-                # if finalPos_x <= obstacle.right+11 and finalPos_x >= obstacle.pos[0]-11 and finalPos_y >= obstacle.pos[1]-11 and finalPos_y <= obstacle.top+11:
-                #     addValue=2
-
-                if finalPos_x <= obstacle.right+addValue+1 and finalPos_x >= obstacle.pos[0]-addValue-1 and finalPos_y >= obstacle.pos[1]-addValue-1 and finalPos_y <= obstacle.top+addValue+1:
-                    addValue = 1
-                    
-                
-
-                if finalPos_x <= obstacle.right and finalPos_x >= obstacle.pos[0] and finalPos_y >= obstacle.pos[1] and finalPos_y <= obstacle.top:
-                    hit=True
-
-
-                
-                
-
-
-        self.canvas.clear()
-        with self.canvas:
+        # Move and draw rays
+        for ray in self.rayList:
             
-            #Color(rgba=[1,0.1,0.5,0.2])
-            #Rectangle(pos=self.pos, size=self.size)
-            Color(rgba=[1,1,1,1])
-            Line(points=[self.center_x, self.center_y, finalPos_x, finalPos_y], width = 1)
+            # if raycount>=self.tickCount: break
+            # raycount +=1
+
+            ray.Vi = Vector(self.particle.center_x, self.particle.center_y)
+            ray.Vf = ray.Vi + 3000*Vector(0,1).rotate(ray.angle)
+
+            dist = 1000
+            
+            # Check intersection with obstacles
+            for obst in self.obstList:
+
+                # Distance for each obstacle
+                
+
+                # Calculate intersection point
+                interPoint, onLine1, onLine2 = self.LineIntersection([ray.Vi,ray.Vf],[obst.Vi, obst.Vf])
+                if onLine2 == True and onLine1 == True:
+                    if ray.Vi.distance(interPoint) < dist:
+                        dist = ray.Vi.distance(interPoint)
+                        ray.Vf.x, ray.Vf.y = Vector(interPoint[0], interPoint[1])
+
+                    # Draw intersection points
+                    # with self.canvas.before:
+                    #     Color(1,0,0,1)
+                    #     Ellipse(size=(2,2), pos=(interPoint[0]-1, interPoint[1]-1))
+
+            # Draw end points
+            with self.canvas.before:
+                Color(((2000-dist)/1000),(dist/200),0,0.5)
+                Ellipse(size=(4,4), pos=(ray.Vf.x-2, ray.Vf.y-2))
+
+            meshVerticesList.extend([ray.Vf.x,ray.Vf.y,0,0])
+
+        
+        # Draw mesh
+        meshIndList = list(range(len(meshVerticesList)//4))
+        with self.canvas.before:
+            Color(1,1,1,0.2)
+            Mesh(mode='line_loop', vertices=meshVerticesList, indices=meshIndList)
+        
+        # Draw obstacles
+        for obst in self.obstList:
+            with self.canvas.before:
+                Color(rgba=(0.5,0.5,0.5,0.1))
+                Line(points=[obst.Vi, obst.Vf], width=2)
+                Color(rgba=(1,1,1,1))
+            pass
+
+    def LineIntersection(self, line1, line2):
+        Vi1, Vf1 = line1
+        Vi2, Vf2 = line2
+        x1,y1 = Vi1
+        x2,y2 = Vf1
+        x3,y3 = Vi2
+        x4,y4 = Vf2
+        
+        # Calculate intersection point
+        t_num = (x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)
+        t_den = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
+        t = t_num/t_den
+
+        u_num = (x1-x2)*(y1-y3) - (y1-y2)*(x1-x3)
+        u_den = t_den
+        u = -u_num/u_den
+        
+        Px = x1 + t*(x2-x1)
+        Py = y1 + t*(y2-y1)
+        interPoint = [Px,Py]
+
+        # Check if intersection point is on line1 and/or on line2
+        onLine1 = True if (t>=0 and t<=1) else False
+        onLine2 = True if (u>=0 and u<=1) else False
+
+        return [interPoint, onLine1, onLine2]
     
-class OutRegion(Widget):
-    pass
 
 class RT2D_App(App):
     def build(self):
