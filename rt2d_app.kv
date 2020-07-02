@@ -2,25 +2,26 @@
     particle: particleID
     drawLine: drawLineID
     
-    BoxLayout:
-        orientation: 'vertical'
-        size_hint: None, None
-        pos_y: root.height
+    FloatLayout:
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint: None, None
+            pos: '20dp','20dp'
 
-        id: menuRegion
-        
-        # canvas:
-        #     Color:
-        #         rgba:1,1,1,1
-        #     Rectangle:
-        #         pos: self.pos
-        #         size: self.size
+            id: menuRegion
+            
+            # canvas:
+            #     Color:
+            #         rgba:1,1,1,1
+            #     Rectangle:
+            #         pos: self.pos
+            #         size: self.size
 
-        Label:
-            text: "Draw Lines"
-        Switch:
-            id: drawLineID
-            #pos: -root.
+            Label:
+                text: "Draw Lines"
+            Switch:
+                id: drawLineID
+                #pos: -root.
 
     FloatLayout:
         Particle:
