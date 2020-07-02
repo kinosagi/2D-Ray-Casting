@@ -3,6 +3,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 # from kivy.uix.behaviors import DragBehavior
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ObjectProperty, BooleanProperty, NumericProperty, ListProperty
 # import numpy as np
 from kivy.core.window import Window
@@ -10,6 +11,7 @@ from kivy.clock import Clock
 from kivy.graphics import Line, Rectangle, Color, Ellipse, Mesh
 from kivy.vector import Vector
 from random import randint
+from kivy.metrics import dp
 
 
 
@@ -33,21 +35,21 @@ class Particle(Widget):
 
         self.Movable = BooleanProperty(False)
 
-    def on_touch_move(self, touch):
-        self.center = [touch.x, touch.y]
-        #print(self.center)
+    
     pass
 
-class TelaPrincipal(FloatLayout):
+class TelaPrincipal(BoxLayout):
 
     particle = ObjectProperty(None)
-    rayQty = NumericProperty(1000)
-    obstQty = NumericProperty(3)
+    rayQty = NumericProperty(500)
+    obstQty = NumericProperty(0)
 
     rayList = ListProperty()
     obstList = ListProperty()
 
-    #tickCount = 0
+    drawLine = ObjectProperty(None)
+    drawingLine = BooleanProperty(False)
+    newLine = [0,0,0,0]
 
     def __init__ (self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,7 +58,7 @@ class TelaPrincipal(FloatLayout):
 
         # Add rays to Screen
         for i in range(0,self.rayQty):
-            direction = 300*Vector(0,1).rotate(i*360/self.rayQty)
+            direction = dp(300)*Vector(0,1).rotate(i*360/self.rayQty)
             ray = Ray(Window.center[0],Window.center[1],Window.center[0]+direction[0],Window.center[1]+direction[1],i*360/self.rayQty)
             self.rayList.append(ray)
         
@@ -65,14 +67,42 @@ class TelaPrincipal(FloatLayout):
             obst = Obstacle(randint(0,Window.width),randint(0,Window.height),randint(0,Window.width),randint(0,Window.height))
             self.obstList.append(obst)
 
+
+    def on_touch_move(self, touch):
+        if not self.drawLine.active:
+            if not self.ids.menuRegion.collide_point(*touch.pos):
+                self.particle.center = [touch.x, touch.y]
+        else:
+            self.newLine[2], self.newLine[3] = touch.x, touch.y
+            self.canvas.after.clear()
+            with self.canvas.after:
+                Color(rgba=(0.5,0.5,0.5,0.5))
+                Line(points=[*self.newLine], width=dp(2))  
+        return super().on_touch_move(touch)
+
+    def on_touch_down(self, touch):
         
+        if self.drawLine.active:
+            self.newLine[0], self.newLine[1] = touch.x, touch.y
+            self.newLine[2], self.newLine[3] = touch.x, touch.y
+            
+        return super().on_touch_down(touch)
+    
+    def on_touch_up(self, touch):
+        if self.drawLine.active:
+            #self.newLine[2], self.newLine[3] = touch.x, touch.y
+
+            if not (self.newLine[0] == self.newLine[2] and self.newLine[1]==self.newLine[3]):
+                obst = Obstacle(*self.newLine)
+                self.obstList.append(obst)
+            self.canvas.after.clear()
+            
+        return super().on_touch_up(touch)
+        
+
     def Tick(self, dt):
         # Clean Canvas
         self.canvas.before.clear()
-
-        #self.tickCount +=1
-        #raycount = 0
-        #print(self.tickCount)
 
         meshVerticesList = []
 
@@ -83,9 +113,9 @@ class TelaPrincipal(FloatLayout):
             # raycount +=1
 
             ray.Vi = Vector(self.particle.center_x, self.particle.center_y)
-            ray.Vf = ray.Vi + 3000*Vector(0,1).rotate(ray.angle)
+            ray.Vf = ray.Vi + dp(1000)*Vector(0,1).rotate(ray.angle)
 
-            dist = 1000
+            dist = dp(5000)
             
             # Check intersection with obstacles
             for obst in self.obstList:
@@ -107,8 +137,8 @@ class TelaPrincipal(FloatLayout):
 
             # Draw end points
             with self.canvas.before:
-                Color(((2000-dist)/1000),(dist/200),0,0.5)
-                Ellipse(size=(4,4), pos=(ray.Vf.x-2, ray.Vf.y-2))
+                Color(((1000-dist)/1000),(dist/200),0,1)
+                Ellipse(size=(dp(4),dp(4)), pos=(ray.Vf.x-2, ray.Vf.y-2))
 
             meshVerticesList.extend([ray.Vf.x,ray.Vf.y,0,0])
 
@@ -122,10 +152,9 @@ class TelaPrincipal(FloatLayout):
         # Draw obstacles
         for obst in self.obstList:
             with self.canvas.before:
-                Color(rgba=(0.5,0.5,0.5,0.1))
-                Line(points=[obst.Vi, obst.Vf], width=2)
+                Color(rgba=(0.5,0.5,0.5,1))
+                Line(points=[obst.Vi, obst.Vf], width=dp(1))
                 Color(rgba=(1,1,1,1))
-            pass
 
     def LineIntersection(self, line1, line2):
         Vi1, Vf1 = line1
