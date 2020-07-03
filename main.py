@@ -41,7 +41,7 @@ class Particle(Widget):
 class TelaPrincipal(BoxLayout):
 
     particle = ObjectProperty(None)
-    rayQty = NumericProperty(500)
+    rayQty = NumericProperty(100)
     obstQty = NumericProperty(0)
 
     rayList = ListProperty()
@@ -137,6 +137,8 @@ class TelaPrincipal(BoxLayout):
 
             # Draw end points
             with self.canvas.before:
+                #Color(1,1,1,0.5)
+                #Line(points=(ray.Vi, ray.Vf,), width = 1)
                 Color(((1000-dist)/1000),(dist/200),0,1)
                 Ellipse(size=(dp(4),dp(4)), pos=(ray.Vf.x-2, ray.Vf.y-2))
 
